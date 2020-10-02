@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   camunda:
-    image: camunda/camunda-bpm-platform:tomcat-7.14.0-SNAPSHOT
+    image: maximmonin/camunda
     container_name: camunda
     restart: always
     depends_on:
