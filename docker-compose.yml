@@ -15,6 +15,7 @@ services:
       - 8080
       - 9404
     volumes:
+      #- ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml
       - /etc/localtime:/etc/localtime:ro
     environment:
       - DB_DRIVER=org.postgresql.Driver
@@ -71,8 +72,69 @@ services:
       - POSTGRES_PASSWORD=postgres
       - PGPASSWORD=camunda
 
+  pgadmin:
+    image: dpage/pgadmin4:4.26
+    container_name: camunda-pgadmin
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 2581:80
+    networks:
+      default:
+    volumes:
+      - ./cfg/servers.json:/pgadmin4/servers.json
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@postgres
+      - PGADMIN_DEFAULT_PASSWORD=postgres
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+
+  prometheus:
+    image: prom/prometheus:v2.20.1
+    container_name: camunda-prometheus
+    restart: always
+    expose:
+      - 9090
+    networks:
+      default:
+    volumes:
+      - ./prometheus:/prometheus
+      - ./cfg/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /etc/localtime:/etc/localtime:ro
+
+  grafana:
+    image: grafana/grafana:7.1.5-ubuntu
+    container_name: camunda-grafana
+    restart: always
+    ports:
+      - "2582:3000"
+    expose:
+      - 3000
+    networks:
+      default:
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - /etc/localtime:/etc/localtime:ro
+
+  monitor:
+    image: kotovdenis/excamad:latest
+    container_name: camunda-monitor
+    restart: always
+    ports:
+      - "2584:80"
+    expose:
+      - 80
+    networks:
+      default:
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+##################################################
+### Not used right now                         ###
+
   elasticsearch:
-    image: elasticsearch:7.9.1
+    image: elasticsearch:6.8.12
     restart: always
     container_name: camunda-search
     environment:
@@ -93,7 +155,7 @@ services:
       default:
 
   kibana:
-    image: kibana:7.9.1
+    image: kibana:6.8.12
     restart: always
     container_name: camunda-kibana
     networks:
@@ -103,52 +165,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
-     - "5601:5601"
+     - "2583:5601"
 
-  prometheus:
-    image: prom/prometheus:v2.20.1
-    container_name: camunda-prometheus
-    restart: always
-    expose:
-      - 9090
-    networks:
-      default:
-    volumes:
-      - ./prometheus:/prometheus
-      - ./cfg/prometheus.yml:/etc/prometheus/prometheus.yml
-      - /etc/localtime:/etc/localtime:ro
-
-  grafana:
-    image: grafana/grafana:7.1.5-ubuntu
-    container_name: camunda-grafana
-    restart: always
-    ports:
-      - "2583:3000"
-    expose:
-      - 3000
-    networks:
-      default:
-    volumes:
-      - ./grafana:/var/lib/grafana
-      - /etc/localtime:/etc/localtime:ro
-
-  pgadmin:
-    image: dpage/pgadmin4:4.26
-    container_name: camunda-pgadmin
-    restart: always
-    depends_on:
-      - db
-    ports:
-      - 2581:80
-    networks:
-      default:
-    volumes:
-      - ./cfg/servers.json:/pgadmin4/servers.json
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@postgres
-      - PGADMIN_DEFAULT_PASSWORD=postgres
-      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
 
 networks:
   default:
