@@ -15,7 +15,10 @@ services:
       - 8080
       - 9404
     volumes:
-      #- ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml
+      # enable Cors
+      - ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml
+      # new jdbc driver
+      - ./cfg/postgresql-42.2.16.jar:/camunda/lib/postgresql-9.4.1212.jar
       # user tasklist forms
       - ./camunda/forms:/camunda/webapps/camunda/forms
       - /etc/localtime:/etc/localtime:ro
