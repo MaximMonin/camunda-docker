@@ -16,6 +16,8 @@ services:
       - 9404
     volumes:
       #- ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml
+      # user tasklist forms
+      - ./camunda/forms:/camunda/webapps/camunda/forms
       - /etc/localtime:/etc/localtime:ro
     environment:
       - DB_DRIVER=org.postgresql.Driver
