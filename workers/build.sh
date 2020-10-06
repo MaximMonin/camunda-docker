@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo docker build --rm -t nodejs_oebridge:latest .
+sudo docker build --rm -t maximmonin/camunda-worker:latest .
