@@ -15,6 +15,10 @@ const faker = require ('faker');
 const url = process.env.CamundaURL || 'http://camunda:8080/engine-rest';
 const bpm = 'payment-retrieval';
 const timeout = process.env.ResponseTimeout || 10000;
+
+const bot = '1156976860:AAEEwz6LLkylvsrHqt6ErFJl1_rZt6dK_FE';
+const channel = '-1001411591497';
+
 const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout, maxTasks: 50, maxParallelExecutions: 10 };
 
 // create a Client instance with custom configuration
@@ -53,7 +57,7 @@ client.subscribe('charge-card', {processDefinitionKey: bpm}, async function({ ta
     }
 
     // Handle a Failure
-    if (Math.random() > 0.2)
+    if (Math.random() > 0.1)
     {
     // repeat again and again
       taskService.handleFailure(task, {
@@ -86,8 +90,31 @@ client.subscribe('charge-card-premium', {processDefinitionKey: bpm}, async funct
 
   console.log(`Premium charging credit card with an amount of ${amount}€ for the item '${item}'...`);
 
-  // Complete the task
-  await taskService.complete(task);
+  // send message to telegram channel
+  axios.post( 'https://api.telegram.org/bot' + bot + '/sendMessage', {chat_id: channel,  parse_mode: 'HTML', 
+               text: 'Bingo! We got ' + amount + '€ for ' + item  }).then(response => {
+     const data = response.data;
+     console.log('Telegram answer: ' + JSON.stringify(data));
+
+     // Complete the task
+     taskService.complete(task);
+  })
+  .catch(function (error) {
+    if (error.response) {
+      // Request made and server responded
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.log(error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.log('Error', error.message);
+    }
+     // Complete the task
+     taskService.complete(task);
+  });
 });
 
 
