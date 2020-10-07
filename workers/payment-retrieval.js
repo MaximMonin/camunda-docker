@@ -15,9 +15,8 @@ const faker = require ('faker');
 const url = process.env.CamundaURL || 'http://camunda:8080/engine-rest';
 const bpm = 'payment-retrieval';
 const timeout = process.env.ResponseTimeout || 10000;
-
-const bot = '1156976860:AAEEwz6LLkylvsrHqt6ErFJl1_rZt6dK_FE';
-const channel = '-1001411591497';
+const bot = process.env.TelegramBot;
+const channel = process.env.TelegramChannel;
 
 const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout, maxTasks: 50, maxParallelExecutions: 10 };
 
@@ -101,19 +100,13 @@ client.subscribe('charge-card-premium', {processDefinitionKey: bpm}, async funct
   })
   .catch(function (error) {
     if (error.response) {
-      // Request made and server responded
       console.log(error.response.data);
-      console.log(error.response.status);
-      console.log(error.response.headers);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.log(error.request);
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.log('Error', error.message);
+    } 
+    else {
+      console.log('error sending data to telegram');
     }
-     // Complete the task
-     taskService.complete(task);
+    // Complete the task
+    taskService.complete(task);
   });
 });
 

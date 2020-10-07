@@ -43,6 +43,8 @@ services:
     environment:
       - CamundaUrl='http://camunda:8080/engine-rest'
       - ResponseTimeout=5000
+      - TelegramBot
+      - TelegramChannel
     volumes:
       - ./workers/payment-retrieval.js:/app/server.js
       - /etc/localtime:/etc/localtime:ro
