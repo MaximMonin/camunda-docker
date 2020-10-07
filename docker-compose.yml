@@ -32,6 +32,18 @@ services:
       - TZ=Europe/Kiev
       - JMX_PROMETHEUS=true
 
+  worker:
+    image: maximmonin/camunda-worker
+    container_name: camunda-worker
+    restart: always
+    depends_on:
+      - camunda
+    networks:
+      default:
+    environment:
+      - CamundaUrl='http://camunda:8080/engine-rest'
+      - ResponseTimeout=5000
+
   db:
     image: postgres:12.3
     restart: always

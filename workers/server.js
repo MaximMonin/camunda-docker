@@ -1,103 +1,66 @@
-var express = require('express');
-var app = express();
-var soap = require('soap');
-var xml2js = require('xml2js');
-var options = {compact: true, ignoreComment: true, spaces: 4};
+const { Client, logger, Variables, File } = require('camunda-external-task-client-js');
+const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+const faker = require ('faker');
 
-var loglevel = process.env.LogLevel || 1;
-var urlendpoint = process.env.UrlEndPoint;
-var url = urlendpoint + '/wsdl?TargetUri=OpenedgeBridge';
-var args = { iHandler: "", iInputPars: "", iInputBase64: "", iIncludeMetaSchema: 1 };
+// configuration for the Client:
+//  - 'baseUrl': url to the Process Engine
+//  - 'logger': utility to automatically log important events
+//  - 'asyncResponseTimeout': long polling timeout (then a new request will be issued)
+var url = process.env.CamundaURL || 'http://camunda:8080/engine-rest';
+var timeout = process.env.ResponseTimeout || 10000;
+const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout };
 
+// create a Client instance with custom configuration
+const client = new Client(config);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// susbscribe to the topic: 'charge-card'
+client.subscribe('charge-card', async function({ task, taskService }) {
+  // Put your business logic here
 
-var server = app.listen(3000, function () {
-  console.log('Openedge Bridge listening on port 3000...');
-});
+  // Get a process variable
+  const amount = task.variables.get('amount');
+  const item = task.variables.get('item');
 
-// The signals we want to handle
-// NOTE: although it is tempting, the SIGKILL signal (9) cannot be intercepted and handled
-var signals = {
-  'SIGHUP': 1,
-  'SIGINT': 2,
-  'SIGTERM': 15
-};
-// Do any necessary shutdown logic for our application here
-const shutdown = (signal, value) => {
-  server.close(() => {
-    console.log(`server stopped`);
-    process.exit(128 + value);
+  console.log(`Charging credit card with an amount of ${amount}€ for the item '${item}'...` );
+  console.log(`Process:` + url + '/process-instance/' + task.processInstanceId )
+
+  axios.get(url + '/process-instance/' + task.processInstanceId ).then(response => {
+     const data = response.data;
+     console.log('Process data: ' + JSON.stringify(data));
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
   });
-};
-// Create a listener for each of the signals that we want to handle
-Object.keys(signals).forEach((signal) => {
-  process.on(signal, () => {
-    console.log(`Begin shutdown`);
-    shutdown(signal, signals[signal]);
-  });
+
+  // Complete the task
+  await taskService.complete(task);
+});
+
+// susbscribe to the topic: 'charge-card-premium'
+client.subscribe('charge-card-premium', async function({ task, taskService }) {
+  // Put your business logic here
+
+  // Get a process variable
+  const amount = task.variables.get('amount');
+  const item = task.variables.get('item');
+
+  console.log(`Premium charging credit card with an amount of ${amount}€ for the item '${item}'...`);
+
+  // Complete the task
+  await taskService.complete(task);
 });
 
 
-var processQuery = function (req, res) {
-  if (loglevel > 1) console.log ('Incoming ' + req.method + ' query');
-  var ipar = req.params[0];
-  var iHandler = ipar.substr(ipar.indexOf('/',0) + 1)+ '.p';
-  if (loglevel > 1) console.log (iHandler);
-  var iParams = Object.assign({}, req.query, req.body);
-  if (loglevel > 1) console.log (iParams);
+// susbscribe to the topic: 'generate-item-amount'
+client.subscribe('generate-item-amount', async function({ task, taskService }) {
 
-  args.iHandler = 'webservices/Webspeed.p';
-  args.iInputPars = iHandler;
+  console.log(`Generating amount and item for process...`);
 
-  var builder = new xml2js.Builder();
-  var xml = builder.buildObject(iParams);
+  const processVariables = new Variables();
+  processVariables.set("amount", Number(faker.fake('{{finance.amount}}')));
+  processVariables.set('item', faker.fake('{{commerce.product}}'));
 
-//  console.log (xml);
-  args.iInputBase64 = Buffer.from(xml).toString('base64');
-
-  soap.createClient(url, {endpoint: urlendpoint}, function(err, client) 
-  {
-    if (err) console.log("Connect to webservice ERROR: "+err);
-    else 
-    {
-      client.OpenedgeBridge(args, function(err, result) 
-      {
-        if (loglevel > 1) console.log("webservice RESULT");
-        if (err) console.log("WebService Query Error: "+err);
-        else 
-        {
-          if (loglevel > 1) console.log("OutputPar:", result.oOutputPars);
-          var r = Buffer.from(result.oOutputBase64,'base64').toString('utf8');
-          if (loglevel > 1) console.log("OutputData:", r);
-          if (result.oErrMsg != '') console.log("Webservice ErrMessage:", result.oErrMsg);
-          res.status(200).end (r);
-        }
-      });
-    }
-  });
-}
-
-app.get('/cgi-bin/wspd_cgi.sh/WService*', processQuery);
-app.post('//cgi-bin/wspd_cgi.sh/WService*', processQuery);
-app.post('/cgi-bin/wspd_cgi.sh/WService*', processQuery);
-
-app.get('/', function(req, res) {
-  res.send('Openedge Bridge');
-//  console.log ('Incoming query get:', req.url )
-});
-app.post('/', function (req, res) {
-  res.send('Openedge Bridge');
-//  console.log ('Incoming query get:', req.url )
-});
-
-app.get('/*', function(req, res) {
-  res.send(req.url);
-  console.log ('Incoming query get:', req.url )
-});
-
-app.post('/*', function(req, res) {
-  res.send(req.url);
-  console.log ('Incoming query post:', req.url )
+  // Complete the task
+  await taskService.complete(task, processVariables);
 });

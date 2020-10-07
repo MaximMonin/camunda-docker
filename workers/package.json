@@ -1,9 +1,9 @@
 {
-  "name": "node2oe",
+  "name": "camunda-worker",
   "version": "0.1.0",
   "dependencies": {
-    "express": "~4.17.1",
-    "soap": "~0.29.0",
-    "xml2js": "~0.4.19"
+    "camunda-external-task-client-js": "~2.0.0",
+    "axios": "~0.20.0",
+    "faker": "~5.1.0"
   }
 }
