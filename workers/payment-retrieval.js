@@ -29,19 +29,51 @@ client.subscribe('charge-card', {processDefinitionKey: bpm}, async function({ ta
   const item = task.variables.get('item');
 
   console.log(`Charging credit card with an amount of ${amount}€ for the item '${item}'...` );
-  console.log(`Process:` + url + '/process-instance/' + task.processInstanceId )
+  console.log(`Process: ` + url + '/process-instance/' + task.processInstanceId )
 
   axios.get(url + '/process-instance/' + task.processInstanceId ).then(response => {
      const data = response.data;
      console.log('Process data: ' + JSON.stringify(data));
+
+     // Complete the task
+     taskService.complete(task);
   })
   .catch(function (error) {
-    // handle error
-    console.log(error);
+    if (error.response) {
+      // Request made and server responded
+      console.log(error.response.data);
+      console.log(error.response.status);
+      console.log(error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.log(error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.log('Error', error.message);
+    }
+
+    // Handle a Failure
+    if (Math.random() > 0.2)
+    {
+    // repeat again and again
+      taskService.handleFailure(task, {
+        errorMessage: "Cannot exctract process id data",
+        errorDetails: error.response.data.message,
+        retries: 1,
+        retryTimeout: 1000
+      });
+    }
+    else {
+    // Create incident
+      taskService.handleFailure(task, {
+        errorMessage: "Cannot exctract process id data",
+        errorDetails: error.response.data.message,
+        retries: 0,
+        retryTimeout: 1000
+      });
+    }
   });
 
-  // Complete the task
-  await taskService.complete(task);
 });
 
 // susbscribe to the topic: 'charge-card-premium'
