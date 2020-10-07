@@ -31,11 +31,12 @@
 
 
   <!-- Fetch And Lock Handler (long polling): Unique Worker Request (default value: false) -->
+  <!--
   <context-param>
     <param-name>fetch-and-lock-unique-worker-request</param-name>
     <param-value>true</param-value>
   </context-param>
-
+  -->
   <!-- rest bootstrap listener -->
   <listener>
     <listener-class>org.camunda.bpm.engine.rest.impl.web.bootstrap.RestContainerBootstrap</listener-class>
