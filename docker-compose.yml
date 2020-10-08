@@ -32,9 +32,9 @@ services:
       - TZ=Europe/Kiev
       - JMX_PROMETHEUS=true
 
-  worker:
-    image: maximmonin/camunda-worker
-    container_name: camunda-worker
+  worker-node:
+    image: maximmonin/camunda-worker-node
+    container_name: camunda-worker-node
     restart: always
     depends_on:
       - camunda
@@ -46,7 +46,7 @@ services:
       - TelegramBot
       - TelegramChannel
     volumes:
-      - ./workers/payment-retrieval.js:/app/server.js
+      - ./workers/node/payment-retrieval.js:/app/server.js
       - /etc/localtime:/etc/localtime:ro
 
 
