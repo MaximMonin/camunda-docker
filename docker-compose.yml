@@ -50,6 +50,23 @@ services:
       - ./workers/node/payment-retrieval.js:/app/server.js
       - /etc/localtime:/etc/localtime:ro
 
+  worker-node2:
+    image: maximmonin/camunda-worker-node
+    container_name: camunda-worker-node2
+    restart: always
+    depends_on:
+      - camunda
+    networks:
+      default:
+    environment:
+      - CamundaUrl='http://camunda:8080/engine-rest'
+      - ResponseTimeout=5000
+      - TelegramBot
+      - TelegramChannel
+    volumes:
+      - ./workers/node/payment-retrieval.js:/app/server.js
+      - /etc/localtime:/etc/localtime:ro
+
 
   db:
     image: postgres:12.3
