@@ -20,6 +20,7 @@ services:
       # new jdbc driver
       - ./cfg/postgresql-42.2.16.jar:/camunda/lib/postgresql-9.4.1212.jar
       # user tasklist forms
+      - ./cfg/bpm-platform.xml:/camunda/conf/bpm-platform.xml
       - ./camunda/forms:/camunda/webapps/camunda/forms
       - /etc/localtime:/etc/localtime:ro
     environment:
