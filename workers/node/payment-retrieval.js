@@ -18,7 +18,10 @@ const timeout = process.env.ResponseTimeout || 10000;
 const bot = process.env.TelegramBot;
 const channel = process.env.TelegramChannel;
 
-const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout, maxTasks: 200, maxParallelExecutions: 200, interval: 5 };
+// for fast parallel processing it is critical to reduse polling internal to low value (5ms)
+// + camunda recommends to set asyncBefore flag to set transaction save point before each external task (model)
+// On this example it works 3 times faster compared to default 10 thread + 300 ms interval
+const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout, maxTasks: 200, interval: 5 };
 
 // create a Client instance with custom configuration
 const client = new Client(config);
