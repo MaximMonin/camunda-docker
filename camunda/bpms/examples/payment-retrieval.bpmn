@@ -5,7 +5,7 @@
       <bpmn:outgoing>Flow_1jf65ng</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_1jf65ng" sourceRef="StartEvent_1" targetRef="generate" />
-    <bpmn:serviceTask id="charge-card" name="Снять деньги с карты" camunda:asyncBefore="true" camunda:type="external" camunda:topic="ServiceTask">
+    <bpmn:serviceTask id="charge-card" name="Снять деньги с карты" camunda:asyncBefore="true" camunda:type="external" camunda:topic="service-task">
       <bpmn:incoming>Flow_03ohmj4</bpmn:incoming>
       <bpmn:outgoing>Flow_1x4x0wm</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -14,7 +14,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_1x4x0wm" sourceRef="charge-card" targetRef="Event_payment_done" />
     <bpmn:sequenceFlow id="Flow_0mpi2xp" sourceRef="generate" targetRef="Gateway_19wpozq" />
-    <bpmn:serviceTask id="generate" name="Генератор" camunda:asyncBefore="true" camunda:type="external" camunda:topic="ServiceTask">
+    <bpmn:serviceTask id="generate" name="Генератор" camunda:asyncBefore="true" camunda:type="external" camunda:topic="service-task">
       <bpmn:incoming>Flow_1jf65ng</bpmn:incoming>
       <bpmn:outgoing>Flow_0mpi2xp</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -33,7 +33,7 @@
       <bpmn:incoming>Flow_1rk9h1b</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_1rk9h1b" sourceRef="charge-card-premium" targetRef="Event_payment_done_premium" />
-    <bpmn:serviceTask id="charge-card-premium" name="Премиум снятие денег" camunda:asyncBefore="true" camunda:type="external" camunda:topic="ServiceTask">
+    <bpmn:serviceTask id="charge-card-premium" name="Премиум снятие денег" camunda:asyncBefore="true" camunda:type="external" camunda:topic="service-task">
       <bpmn:incoming>Flow_0lfa0vq</bpmn:incoming>
       <bpmn:outgoing>Flow_1rk9h1b</bpmn:outgoing>
     </bpmn:serviceTask>

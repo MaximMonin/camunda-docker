@@ -13,7 +13,7 @@ const { router } = require ('./js/router.js');
 
 const url = process.env.CamundaUrl || 'http://camunda:8080/engine-rest';
 const timeout = process.env.ResponseTimeout || 10000;
-const tasktype = process.env.TaskType || 'ServiceTask';
+const tasktype = process.env.TaskType || 'service-task';
 const loglevel = process.env.LogLevel || 'INFO';
 
 // for fast parallel processing it is critical to reduse polling internal to low value (5ms)
@@ -25,6 +25,12 @@ const config = { baseUrl: url, use: logger.level(loglevel), asyncResponseTimeout
 
 console.log('Camunda Node worker is starting...')
 const client = new Client(config);
+
+const topicSubscription = client.subscribe(tasktype, {}, async function ({task, taskService}) {
+//  console.log (JSON.stringify(task)); 
+
+  await router (task, taskService);
+});
 
 // For docker enviroment it catch docker compose down/restart commands
 // The signals we want to handle
@@ -43,22 +49,11 @@ const shutdown = (signal, value) => {
 Object.keys(signals).forEach((signal) => {
   process.on(signal, () => {
     console.log(`Camunda Node worker is shutdowning`);
+
+    topicSubscription.unsubscribe();
+    client.stop();
+
     shutdown(signal, signals[signal]);
   });
 });
 
-async function main() {
-  // susbscribe to the task
-  try {
-    await client.subscribe(tasktype, {}, async function ({task, taskService}) {
-      console.log (JSON.stringify(task)); 
-
-      router (task, taskService);
-    });
-  } 
-  catch (e) {
-    console.error(e);
-  }
-}
-
-main ();

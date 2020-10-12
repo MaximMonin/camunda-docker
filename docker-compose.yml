@@ -45,7 +45,7 @@ services:
       - LogLevel=info
       - CamundaUrl=http://camunda:8080/engine-rest
       - ResponseTimeout=5000
-      - TaskType=ServiceTask
+      - TaskType=service-task
       - TelegramBot
       - TelegramChannel
     volumes:
