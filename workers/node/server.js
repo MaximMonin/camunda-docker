@@ -51,9 +51,8 @@ async function main() {
   // susbscribe to the task
   try {
     await client.subscribe(tasktype, {}, async function ({task, taskService}) {
-/*
       console.log (JSON.stringify(task)); 
-*/
+
       router (task, taskService);
     });
   } 
