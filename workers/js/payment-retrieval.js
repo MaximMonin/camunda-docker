@@ -1,33 +1,38 @@
-const { Client, logger, Variables, File } = require('camunda-external-task-client-js');
+const { Variables, File } = require('camunda-external-task-client-js');
 const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 const faker = require ('faker');
 
-// configuration for the Client:
-//  - 'baseUrl': url to the Process Engine
-//  - 'logger': utility to automatically log important events
-//  - 'asyncResponseTimeout': long polling timeout (then a new request will be issued)
-
-//  - 'maxTasks': The maximum number of tasks to fetch from Camunda in batch
-//  - 'maxParallelExecutions': The maximum number of tasks to be worked on simultaneously
-//  Number of async execution threads = maxTasks if maxParallelExcecutions is not set
-//  Else Number of async threads = min (MaxTasks,maxParallelExcecutions)
-
-const url = process.env.CamundaURL || 'http://camunda:8080/engine-rest';
-const bpm = 'payment-retrieval';
-const timeout = process.env.ResponseTimeout || 10000;
 const bot = process.env.TelegramBot;
 const channel = process.env.TelegramChannel;
 
-// for fast parallel processing it is critical to reduse polling internal to low value (5ms)
-// + camunda recommends to set asyncBefore flag to set transaction save point before each external task (model)
-// On this example it works 3 times faster compared to default 10 thread + 300 ms interval
-const config = { baseUrl: url, use: logger, asyncResponseTimeout: timeout, maxTasks: 200, interval: 5 };
+function paymentretrieval (task, taskService)
+{
+  const { processInstanceId, processDefinitionKey, activityId } = task;
+  switch (activityId) {
+  case 'generate':
+    generate (task, taskService);
+    break;
+  case 'charge-card':
+    charge (task, taskService);
+    break;
+  case 'charge-card-premium':
+    chargepremium (task, taskService);
+    break;
+  default:
+    {
+      console.log('Unknown activityId in process ' + processDefinitionKey + ' (' + activityId + ')');
+      taskService.handleFailure(task, {
+        errorMessage: 'Unknown activityId in process ' + processDefinitionKey + ' (' + activityId + ')',
+        errorDetails: '',
+        retries: 0
+      });
+    }
+  }
+};
 
-// create a Client instance with custom configuration
-const client = new Client(config);
+module.exports = {paymentretrieval};
 
-// susbscribe to the topic: 'charge-card'
-client.subscribe('charge-card', {processDefinitionKey: bpm}, async function({ task, taskService }) {
+function charge (task, taskService) {
   // Get a process variable
   const amount = task.variables.get('amount');
   const item = task.variables.get('item');
@@ -79,12 +84,9 @@ client.subscribe('charge-card', {processDefinitionKey: bpm}, async function({ ta
     }
   });
 */
-});
+};
 
-// susbscribe to the topic: 'charge-card-premium'
-client.subscribe('charge-card-premium', {processDefinitionKey: bpm}, async function({ task, taskService }) {
-  // Put your business logic here
-
+function chargepremium (task, taskService) {
   // Get a process variable
   const amount = task.variables.get('amount');
   const item = task.variables.get('item');
@@ -113,18 +115,17 @@ client.subscribe('charge-card-premium', {processDefinitionKey: bpm}, async funct
     taskService.complete(task);
   });
 */
-});
+};
 
-
-// susbscribe to the topic: 'generate-item-amount'
-client.subscribe('generate-item-amount', {processDefinitionKey: bpm},  async function({ task, taskService }) {
-
+function generate (task, taskService) {
   console.log(`Generating amount and item for process...` + task.processInstanceId);
 
   const processVariables = new Variables();
   processVariables.set("amount", Number(faker.fake('{{finance.amount}}')));
   processVariables.set('item', faker.fake('{{commerce.product}}'));
 
+  console.log(`Generating amount and item for process ended...` + task.processInstanceId);
+
   // Complete the task
-  await taskService.complete(task, processVariables);
-});
+  taskService.complete(task, processVariables);
+};

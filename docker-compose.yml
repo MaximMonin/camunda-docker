@@ -42,12 +42,15 @@ services:
     networks:
       default:
     environment:
+      - LogLevel=debug
       - CamundaUrl=http://camunda:8080/engine-rest
       - ResponseTimeout=5000
+      - TaskType=ServiceTask
       - TelegramBot
       - TelegramChannel
     volumes:
-      - ./workers/node/payment-retrieval.js:/app/server.js
+      - ./workers/node/server.js:/app/server.js
+      - ./workers/js:/app/js
       - /etc/localtime:/etc/localtime:ro
 
   db:
