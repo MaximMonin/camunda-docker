@@ -16,11 +16,11 @@ services:
       - 9404
     volumes:
       # enable Cors
-      - ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml
+      - ./cfg/web.xml:/camunda/webapps/engine-rest/WEB-INF/web.xml:ro
       # new jdbc driver
-      - ./cfg/postgresql-42.2.16.jar:/camunda/lib/postgresql-9.4.1212.jar
+      - ./cfg/postgresql-42.2.16.jar:/camunda/lib/postgresql-9.4.1212.jar:ro
       # user tasklist forms
-      - ./cfg/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - ./cfg/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
       - ./camunda/forms:/camunda/webapps/camunda/forms
       - /etc/localtime:/etc/localtime:ro
     environment:
@@ -42,7 +42,7 @@ services:
     networks:
       default:
     environment:
-      - CamundaUrl='http://camunda:8080/engine-rest'
+      - CamundaUrl=http://camunda:8080/engine-rest
       - ResponseTimeout=5000
       - TelegramBot
       - TelegramChannel
@@ -106,7 +106,7 @@ services:
     networks:
       default:
     volumes:
-      - ./cfg/servers.json:/pgadmin4/servers.json
+      - ./cfg/servers.json:/pgadmin4/servers.json:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@postgres
@@ -123,7 +123,7 @@ services:
       default:
     volumes:
       - ./prometheus:/prometheus
-      - ./cfg/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./cfg/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - /etc/localtime:/etc/localtime:ro
 
   grafana:
@@ -152,44 +152,6 @@ services:
       default:
     volumes:
       - /etc/localtime:/etc/localtime:ro
-
-##################################################
-### Not used right now                         ###
-
-  elasticsearch:
-    image: elasticsearch:6.8.12
-    restart: always
-    container_name: camunda-search
-    environment:
-      - discovery.type=single-node
-      - cluster.routing.allocation.disk.threshold_enabled=false
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - ./cfg/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - ./elastic:/usr/share/elasticsearch/data
-    expose:
-      - 9200
-    networks:
-      default:
-
-  kibana:
-    image: kibana:6.8.12
-    restart: always
-    container_name: camunda-kibana
-    networks:
-      default:
-    volumes:
-      - ./cfg/kibana.yml:/usr/share/kibana/config/kibana.yml
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-     - "2583:5601"
-
 
 networks:
   default:

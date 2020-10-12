@@ -1,4 +1,0 @@
-cluster.name: "elastic-search"
-network.host: 0.0.0.0
-
-path.repo: ["/usr/share/elasticsearch/data/backups"]
