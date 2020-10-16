@@ -1,4 +1,5 @@
 const { Client, logger, Variables, File } = require('camunda-external-task-client-js');
+const WebSocket = require('ws');
 const { router } = require ('./js/router.js');
 
 // configuration for the Client:
@@ -31,6 +32,40 @@ const topicSubscription = client.subscribe(tasktype, {}, async function ({task, 
 
   await router (task, taskService);
 });
+
+// Create websocket server to transfer external task answers data to (web) clients
+console.log('Camunda Node Websocket server is starting on port 8080...');
+const wss = new WebSocket.Server({ port: 8080 });
+ 
+function heartbeat() {
+  this.isAlive = true;
+}
+
+wss.on('connection', function connection(ws, req) {
+//  console.log (req);
+  ws.isAlive = true;
+  ws.on('pong', heartbeat);
+
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+  });
+ 
+//  ws.send('something');
+});
+
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+ 
+//    ws.isAlive = false;
+//    ws.ping('ping',{},true);
+  });
+}, 30000);
+
+wss.on('close', function close() {
+  clearInterval(interval);
+});
+
 
 // For docker enviroment it catch docker compose down/restart commands
 // The signals we want to handle

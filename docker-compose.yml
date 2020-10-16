@@ -39,6 +39,9 @@ services:
     restart: always
     depends_on:
       - camunda
+    ports:
+      # Websocket api answers
+      - "2586:8080"
     networks:
       default:
     environment:
@@ -88,7 +91,8 @@ services:
       - bash
       - -c
       - |
-        echo 'Starting replication'
+        echo 'Starting replication...'
+        sleep 10
         pg_basebackup -h db -U camunda -p 5432 -D /var/lib/postgresql/data -Fp -Xs -P -R -w -C -S replica1
         exec docker-entrypoint.sh postgres -c max_connections=100 -c shared_buffers=1GB -c effective_cache_size=1536MB -c maintenance_work_mem=256MB -c max_locks_per_transaction=1000
     volumes:
