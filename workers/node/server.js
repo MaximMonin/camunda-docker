@@ -27,38 +27,49 @@ const config = { baseUrl: url, use: logger.level(loglevel), asyncResponseTimeout
 console.log('Camunda Node worker is starting...')
 const client = new Client(config);
 
-const topicSubscription = client.subscribe(tasktype, {}, async function ({task, taskService}) {
-//  console.log (JSON.stringify(task)); 
-
-  await router (task, taskService);
-});
-
 // Create websocket server to transfer external task answers data to (web) clients
 console.log('Camunda Node Websocket server is starting on port 8080...');
 const wss = new WebSocket.Server({ port: 8080 });
+
+const topicSubscription = client.subscribe(tasktype, {}, async function ({task, taskService}) {
+//  console.log (JSON.stringify(task)); 
+
+  await router (task, taskService, wss);
+});
  
 function heartbeat() {
   this.isAlive = true;
-}
+};
+function noop() {};
 
 wss.on('connection', function connection(ws, req) {
-//  console.log (req);
   ws.isAlive = true;
+  ws.channel = "";
+  ws.processId = "";
+
   ws.on('pong', heartbeat);
 
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
+    if (message.startsWith("{")) {
+      obj = JSON.parse (message);
+      if (obj.command == 'subscribe') {
+        ws.channel = obj.channel;
+        ws.processId = obj.processId;
+      }
+    }
   });
  
-//  ws.send('something');
+  ws.send('welcome');
+  console.log ('welcome -> ws');
 });
 
 const interval = setInterval(function ping() {
   wss.clients.forEach(function each(ws) {
     if (ws.isAlive === false) return ws.terminate();
  
-//    ws.isAlive = false;
-//    ws.ping('ping',{},true);
+    ws.isAlive = false;
+    ws.ping(noop);
   });
 }, 30000);
 

@@ -1,24 +1,25 @@
 const { Variables, File } = require('camunda-external-task-client-js');
+const WebSocket = require('ws');
 const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-function searchdomain (task, taskService)
+function searchdomain (task, taskService, wss)
 {
   const { processInstanceId, processDefinitionKey, activityId } = task;
   switch (activityId) {
   case 'default-zone-list':
-    defaultzonelist (task, taskService);
+    defaultzonelist (task, taskService, wss);
     break;
   case 'full-zone-list':
-    fullzonelist (task, taskService);
+    fullzonelist (task, taskService, wss);
     break;
   case 'get-domain-list':
-    getdomainlist (task, taskService);
+    getdomainlist (task, taskService, wss);
     break;
   case 'get-domain-data':
-    getdomaindata (task, taskService);
+    getdomaindata (task, taskService, wss);
     break;
   case 'get-whois-data':
-    getwhoisdata (task, taskService);
+    getwhoisdata (task, taskService, wss);
     break;
   default:
     {
@@ -34,20 +35,27 @@ function searchdomain (task, taskService)
 
 module.exports = {searchdomain};
 
-function defaultzonelist(task, taskService) {
+function defaultzonelist(task, taskService, wss) {
   const zonelist = convertlist(task.variables.get('default_zone_list'));
-  const key = task.businessKey;
 
   var result = {
     activityId: task.activityId,
     processId: task.processInstanceId,
     data: {zonelist: zonelist}
   }
-  console.log (JSON.stringify(result));
+  // Callback to web client
+  console.log (task.activityId + " -> ws");
+  wss.clients.forEach(function each(client) {
+    // Only send to client subscribed on process with processId
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
+
   taskService.complete(task);
 };
 
-function fullzonelist(task, taskService) {
+function fullzonelist(task, taskService, wss) {
   zone1 = convertlist(task.variables.get('ukraine_zone'));
   zone2 = convertlist(task.variables.get('international_zone'));
   zone3 = convertlist(task.variables.get('international_new_zone'));
@@ -60,7 +68,14 @@ function fullzonelist(task, taskService) {
     processId: task.processInstanceId,
     data: {zonelist: [obj1, obj2, obj3]}
   }
-  console.log (JSON.stringify(result));
+  // Callback to web client
+  console.log (task.activityId + " -> ws");
+  wss.clients.forEach(function each(client) {
+    // Only send to client subscribed on process with processId
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
 
   taskService.complete(task);
 };
@@ -78,17 +93,17 @@ function convertlist (list) {
   return stringArray;
 }
 
-function getdomainlist(task, taskService) {
+function getdomainlist(task, taskService, wss) {
   console.log(task);
   taskService.complete(task);
 };
 
-function getdomaindata(task, taskService) {
+function getdomaindata(task, taskService, wss) {
   console.log(task);
   taskService.complete(task);
 };
 
-function getwhoisdata(task, taskService) {
+function getwhoisdata(task, taskService, wss) {
   console.log(task);
   taskService.complete(task);
 };

@@ -5,18 +5,18 @@ const faker = require ('faker');
 const bot = process.env.TelegramBot;
 const channel = process.env.TelegramChannel;
 
-function paymentretrieval (task, taskService)
+function paymentretrieval (task, taskService, wss)
 {
   const { processInstanceId, processDefinitionKey, activityId } = task;
   switch (activityId) {
   case 'generate':
-    generate (task, taskService);
+    generate (task, taskService, wss);
     break;
   case 'charge-card':
-    charge (task, taskService);
+    charge (task, taskService, wss);
     break;
   case 'charge-card-premium':
-    chargepremium (task, taskService);
+    chargepremium (task, taskService, wss);
     break;
   default:
     {
@@ -32,7 +32,7 @@ function paymentretrieval (task, taskService)
 
 module.exports = {paymentretrieval};
 
-function charge (task, taskService) {
+function charge (task, taskService, wss) {
   // Get a process variable
   const amount = task.variables.get('amount');
   const item = task.variables.get('item');
@@ -86,7 +86,7 @@ function charge (task, taskService) {
 */
 };
 
-function chargepremium (task, taskService) {
+function chargepremium (task, taskService, wss) {
   // Get a process variable
   const amount = task.variables.get('amount');
   const item = task.variables.get('item');
@@ -117,7 +117,7 @@ function chargepremium (task, taskService) {
 */
 };
 
-function generate (task, taskService) {
+function generate (task, taskService, wss) {
   console.log(`Generating amount and item for process...` + task.processInstanceId);
 
   const processVariables = new Variables();

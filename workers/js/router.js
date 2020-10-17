@@ -1,17 +1,17 @@
 const { paymentretrieval } = require ('./payment-retrieval.js');
 const { searchdomain } = require ('./search-domain.js');
 
-function router(task, taskService) {
+function router(task, taskService, wss) {
   const { processInstanceId, processDefinitionKey, activityId } = task;
 
   console.log (JSON.stringify(task)); 
 
   switch (processDefinitionKey) {
   case 'payment-retrieval':
-    paymentretrieval(task, taskService);
+    paymentretrieval(task, taskService, wss);
     break;
   case 'search-domain':
-    searchdomain(task, taskService);
+    searchdomain(task, taskService, wss);
     break;
   default:
     {
