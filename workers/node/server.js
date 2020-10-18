@@ -1,8 +1,15 @@
 const { Client, logger, Variables, File } = require('camunda-external-task-client-js');
+const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 const WebSocket = require('ws');
+
 const { router } = require ('./js/router.js');
 
-// configuration for the Client:
+// Create websocket server to accept commands and return async api result data
+console.log('Camunda Node Websocket server is starting on port 8080...');
+const wss = new WebSocket.Server({ port: 8080 });
+
+
+// configuration for the Camunda Client:
 //  - 'baseUrl': url to the Process Engine
 //  - 'logger': utility to automatically log important events
 //  - 'asyncResponseTimeout': long polling timeout (then a new request will be issued)
@@ -23,20 +30,16 @@ const loglevel = process.env.LogLevel || 'INFO';
 const config = { baseUrl: url, use: logger.level(loglevel), asyncResponseTimeout: timeout, maxTasks: 200, interval: 5 };
 
 // create a Client instance with custom configuration
-
 console.log('Camunda Node worker is starting...')
 const client = new Client(config);
-
-// Create websocket server to transfer external task answers data to (web) clients
-console.log('Camunda Node Websocket server is starting on port 8080...');
-const wss = new WebSocket.Server({ port: 8080 });
-
 const topicSubscription = client.subscribe(tasktype, {}, async function ({task, taskService}) {
 //  console.log (JSON.stringify(task)); 
 
   await router (task, taskService, wss);
 });
- 
+
+
+// Websocket protocol
 function heartbeat() {
   this.isAlive = true;
 };
@@ -45,7 +48,7 @@ function noop() {};
 wss.on('connection', function connection(ws, req) {
   ws.isAlive = true;
   ws.channel = "";
-  ws.processId = "";
+  ws.processId = null;
 
   ws.on('pong', heartbeat);
 
@@ -56,6 +59,45 @@ wss.on('connection', function connection(ws, req) {
       if (obj.command == 'subscribe') {
         ws.channel = obj.channel;
         ws.processId = obj.processId;
+      }
+      if (obj.command == 'startProcess') {
+        axios.post( url + '/process-definition/key/' + obj.ProcessKey + '/start', {variables: obj.variables})
+        .then(response => {
+           const data = response.data;
+           console.log('Workflow instance started: ' + JSON.stringify(data));
+           ws.channel = 'Camunda';
+           ws.processId = data.id;
+           ws.send ('processId=' + data.id);
+           ws.send (JSON.stringify({message: 'startProcessResult', data: data}));
+        })
+        .catch(error => {
+           if (error.response) {
+             console.log(error.response.data);
+           }
+           ws.send (JSON.stringify({message: 'startProcessError', data: error}));
+        });
+      }
+      if (obj.command == 'publishMessage') {
+        var processId = obj.processInstanceId;
+        if (processId == null && ws.processId) {
+          processId = ws.processId;
+        } 
+        axios.post( url + '/message', {messageName: obj.messageName, processInstanceId: processId, processVariables: obj.processVariables})
+        .then(response => {
+          const mesdata = response.data;
+          console.log('Message delivered: ' + JSON.stringify(mesdata));
+          if (obj.processInstanceId) {
+            ws.channel = 'Camunda';
+            ws.processId = obj.processInstanceId;
+          }
+          ws.send (JSON.stringify({message: 'publishMessageResult', data: mesdata}));
+        })
+        .catch(error => {
+          if (error.response) {
+            console.log(error.response.data);
+          }
+          ws.send (JSON.stringify({message: 'publishMessageError', data: error}));
+        });
       }
     }
   });
@@ -98,6 +140,13 @@ Object.keys(signals).forEach((signal) => {
 
     topicSubscription.unsubscribe();
     client.stop();
+    console.log(`Camunda Node WebSocket server is shutdowning`);
+
+    wss.clients.forEach(function each(ws) {
+      ws.terminate();
+    });
+    wss.close();
+    console.log(`Camunda Node WebSocket server stoped`);
 
     shutdown(signal, signals[signal]);
   });
