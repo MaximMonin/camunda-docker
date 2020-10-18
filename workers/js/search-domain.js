@@ -1,6 +1,7 @@
 const { Variables, File } = require('camunda-external-task-client-js');
 const WebSocket = require('ws');
 const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+var whois = require('whois');
 
 function searchdomain (task, taskService, wss)
 {
@@ -94,16 +95,83 @@ function convertlist (list) {
 }
 
 function getdomainlist(task, taskService, wss) {
-  console.log(task);
-  taskService.complete(task);
+  searchname = task.variables.get('searchname');
+  zonelist = JSON.parse (task.variables.get('zonelist'));
+
+  domains = new Array();
+  for(var i =0; i < zonelist.length; i++) {
+    domains.push (searchname + zonelist[i]);
+  }
+
+  const processVariables = new Variables();
+  processVariables.set("domains", domains);
+
+  var result = {
+    activityId: task.activityId,
+    processId: task.processInstanceId,
+    data: domains
+  }
+
+  // Callback to web client
+  console.log (task.activityId + " -> ws");
+  wss.clients.forEach(function each(client) {
+    // Only send to client subscribed on process with processId
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
+  taskService.complete(task, processVariables);
 };
 
 function getdomaindata(task, taskService, wss) {
-  console.log(task);
+  var domain = task.variables.get('domain');
+
+  whois.lookup(domain, function(err, data) {
+    console.log (domain);
+    if (data.includes('No entries found for ' + domain))
+      domaindata = {domain: domain, status: 'free'};
+    else
+      domaindata = {domain: domain, status: 'busy'};
+//    console.log(data)
+  });
+
+  var result = {
+    activityId: task.activityId,
+    processId: task.processInstanceId,
+    data: domaindata
+  }
+  console.log (JSON.stringify(result) + " -> ws");
+
+  // Callback to web client
+  console.log (task.activityId + " -> ws");
+  wss.clients.forEach(function each(client) {
+    // Only send to client subscribed on process with processId
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
   taskService.complete(task);
 };
 
 function getwhoisdata(task, taskService, wss) {
-  console.log(task);
+  domain = task.variables.get('whoisdomain');
+  api = task.variables.get('api');
+
+  whoisdata = {};
+
+  var result = {
+    activityId: task.activityId,
+    processId: task.processInstanceId,
+    data: whoisdata
+  }
+
+  // Callback to web client
+  console.log (task.activityId + " -> ws");
+  wss.clients.forEach(function each(client) {
+    // Only send to client subscribed on process with processId
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
   taskService.complete(task);
 };
