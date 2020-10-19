@@ -53,7 +53,7 @@ wss.on('connection', function connection(ws, req) {
   ws.on('pong', heartbeat);
 
   ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
+//    console.log('received: %s', message);
     if (message.startsWith("{")) {
       obj = JSON.parse (message);
       if (obj.command == 'subscribe') {
@@ -85,7 +85,7 @@ wss.on('connection', function connection(ws, req) {
         axios.post( url + '/message', {messageName: obj.messageName, processInstanceId: processId, processVariables: obj.processVariables})
         .then(response => {
           const mesdata = response.data;
-          console.log('Message delivered: ' + JSON.stringify(mesdata));
+          console.log('Message delivered: ' + JSON.stringify(obj));
           if (obj.processInstanceId) {
             ws.channel = 'Camunda';
             ws.processId = obj.processInstanceId;
@@ -103,7 +103,7 @@ wss.on('connection', function connection(ws, req) {
   });
  
   ws.send('welcome');
-  console.log ('welcome -> ws');
+//  console.log ('welcome -> ws');
 });
 
 const interval = setInterval(function ping() {

@@ -42,7 +42,7 @@ function defaultzonelist(task, taskService, wss) {
     data: {zonelist: zonelist}
   }
   // Callback to web client
-  console.log (task.activityId + " -> ws");
+//  console.log (task.activityId + " -> ws");
   wss.clients.forEach(function each(client) {
     // Only send to client subscribed on process with processId
     if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
@@ -67,7 +67,7 @@ function fullzonelist(task, taskService, wss) {
     data: {zonelist: [obj1, obj2, obj3]}
   }
   // Callback to web client
-  console.log (task.activityId + " -> ws");
+//  console.log (task.activityId + " -> ws");
   wss.clients.forEach(function each(client) {
     // Only send to client subscribed on process with processId
     if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
@@ -108,7 +108,7 @@ async function getdomainsdata(task, taskService, wss) {
     data: domains
   }
 
-  console.log (task.activityId + " -> ws");
+//  console.log (task.activityId + " -> ws");
   wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
       client.send(JSON.stringify(result));
@@ -119,7 +119,6 @@ async function getdomainsdata(task, taskService, wss) {
   domainsdata = new Array();
   for(var i =0; i < domains.length; i++) {
     domaindata = await getdomaindata (domains[i]);
-    console.log (domaindata);
     domainsdata.push (domaindata);
 
     var result = {
@@ -127,10 +126,10 @@ async function getdomainsdata(task, taskService, wss) {
       processId: task.processInstanceId,
       data: domaindata
     }
-    console.log (JSON.stringify(result) + " -> ws");
+//    console.log (JSON.stringify(result) + " -> ws");
 
     // Callback to web client
-    console.log (task.activityId + "-full -> ws");
+//    console.log (task.activityId + "-full -> ws");
     wss.clients.forEach(function each(client) {
       // Only send to client subscribed on process with processId
       if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
@@ -177,7 +176,7 @@ function getwhoisdata(task, taskService, wss) {
       data: data
     }
 
-    console.log (task.activityId + " -> ws");
+//    console.log (task.activityId + " -> ws");
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
         client.send(JSON.stringify(result));

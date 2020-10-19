@@ -124,8 +124,6 @@ function generate (task, taskService, wss) {
   processVariables.set("amount", Number(faker.fake('{{finance.amount}}')));
   processVariables.set('item', faker.fake('{{commerce.product}}'));
 
-  console.log(`Generating amount and item for process ended...` + task.processInstanceId);
-
   // Complete the task
   taskService.complete(task, processVariables);
 };

@@ -4,7 +4,7 @@ const { searchdomain } = require ('./search-domain.js');
 function router(task, taskService, wss) {
   const { processInstanceId, processDefinitionKey, activityId } = task;
 
-  console.log (JSON.stringify(task)); 
+//  console.log (JSON.stringify(task)); 
 
   switch (processDefinitionKey) {
   case 'payment-retrieval':
