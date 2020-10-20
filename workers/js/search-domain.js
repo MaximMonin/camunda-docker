@@ -220,7 +220,7 @@ function stopsession(task, taskService, wss) {
   var result = {
     activityId: task.activityId,
     processId: task.processInstanceId,
-    data: {info: 'Process stoped by timeout'}
+    data: {info: 'Process stopped by timeout'}
   }
   wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {

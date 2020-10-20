@@ -82,7 +82,7 @@ wss.on('connection', function connection(ws, req) {
         if (processId == null && ws.processId) {
           processId = ws.processId;
         } 
-        axios.post( url + '/message', {messageName: obj.messageName, processInstanceId: processId, processVariables: obj.processVariables})
+        axios.post( url + '/message', {messageName: obj.messageName, processInstanceId: processId, all: true, processVariables: obj.processVariables})
         .then(response => {
           const mesdata = response.data;
           console.log('Message delivered: ' + JSON.stringify(obj));
