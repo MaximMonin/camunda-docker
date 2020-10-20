@@ -100,7 +100,7 @@ function convertlist (list) {
   return stringArray;
 }
 
-async function getdomainsdata(task, taskService, wss) {
+function getdomainsdata(task, taskService, wss) {
   searchname = task.variables.get('searchname');
   zonelist = JSON.parse (task.variables.get('zonelist'));
 
@@ -117,43 +117,25 @@ async function getdomainsdata(task, taskService, wss) {
     data: domains
   }
 
-//  console.log (task.activityId + " -> ws");
   wss.clients.forEach(function each(client) {
     if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
       client.send(JSON.stringify(result));
     }
   });
 
-  // Lets calc each domain data and return it to client
-  domainsdata = new Array();
-  for(var i =0; i < domains.length; i++) {
-    domaindata = await getdomaindata (domains[i]);
-    domainsdata.push (domaindata);
-
-    var result = {
-      activityId: task.activityId + '-full',
-      processId: task.processInstanceId,
-      data: domaindata
-    }
-//    console.log (JSON.stringify(result) + " -> ws");
-
-    // Callback to web client
-//    console.log (task.activityId + "-full -> ws");
-    wss.clients.forEach(function each(client) {
-      // Only send to client subscribed on process with processId
-      if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
-        client.send(JSON.stringify(result));
-      }
-    });
-  }
-
+  // We can complete task even if no all data processed
   const processVariables = new Variables();
-  processVariables.set("domains", domainsdata);
-
+  processVariables.set("domains", domains);
   taskService.complete(task, processVariables);
+
+  // Lets calc each domain data and return it to client
+  // Async and parallel
+  for(var i =0; i < domains.length; i++) {
+    getdomaindata (domains[i], task, wss);
+  }
 };
 
-async function getdomaindata(domain) {
+async function getdomaindata(domain, task, wss) {
   var status;
   try {
     var result = await whois(domain);
@@ -168,7 +150,16 @@ async function getdomaindata(domain) {
     console.log ('domain data error:' + JSON.stringify(error));
     status = 'error';
   }
-  return {domain: domain, status: status};
+  var result = {
+      activityId: task.activityId + '-full',
+      processId: task.processInstanceId,
+      data: {domain: domain, status: status}
+  }
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
 };
 
 function getwhoisdata(task, taskService, wss) {
