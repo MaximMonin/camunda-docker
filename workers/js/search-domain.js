@@ -3,6 +3,9 @@ const WebSocket = require('ws');
 const axios = require ('axios'); axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 const whois = require('whois-json');
 
+const bot = process.env.TelegramBot;
+const channel = process.env.TelegramChannel;
+
 function searchdomain (task, taskService, wss)
 {
   const { processInstanceId, processDefinitionKey, activityId } = task;
@@ -18,6 +21,12 @@ function searchdomain (task, taskService, wss)
     break;
   case 'get-whois-data':
     getwhoisdata (task, taskService, wss);
+    break;
+  case 'domain-register-notify':
+    registernotify (task, taskService, wss);
+    break;
+  case 'domain-stop-session':
+    stopsession (task, taskService, wss);
     break;
   default:
     {
@@ -189,3 +198,43 @@ function getwhoisdata(task, taskService, wss) {
     taskService.complete(task);
   });
 }
+
+function registernotify(task, taskService, wss) {
+  const domainlist = task.variables.get('domainlist');
+
+  const info = "Бизнес процесс выбора домена завершен. Для регистрации выбраны следующие домены: " + domainlist;
+
+  // send message to telegram channel
+  axios.post( 'https://api.telegram.org/bot' + bot + '/sendMessage', {chat_id: channel,  parse_mode: 'HTML', text: info  })
+  .then(response => {})
+  .catch(function (error) {
+    console.log(error.response.data);
+  });
+
+  var result = {
+    activityId: task.activityId,
+    processId: task.processInstanceId,
+    data: {info: info}
+  }
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
+
+  taskService.complete(task);
+};
+
+function stopsession(task, taskService, wss) {
+  var result = {
+    activityId: task.activityId,
+    processId: task.processInstanceId,
+    data: {info: 'Process stoped by timeout'}
+  }
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN && client.channel == 'Camunda' && client.processId == task.processInstanceId) {
+      client.send(JSON.stringify(result));
+    }
+  });
+  taskService.complete(task);
+};
