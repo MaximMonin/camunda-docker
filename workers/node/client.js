@@ -21,7 +21,7 @@ class CamundaClient {
     }
     this.url = url;
     return this;
-  };
+  }; 
   transformUrl (url) {
     if (url) {
       if (url.startsWith ('http')) {
@@ -79,6 +79,9 @@ class CamundaClient {
       console.log(e);
     }
   };
+  disconnect () {
+    this.closeSocket ();
+  }
   closeSocket () {
     this.socket.close ();
     this.socket = null;
