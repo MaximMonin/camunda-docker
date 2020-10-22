@@ -60,7 +60,7 @@
       </bpmn:intermediateCatchEvent>
       <bpmn:sequenceFlow id="Flow_1lekl14" sourceRef="Event_0rt0rrh" targetRef="get-whois-data" />
       <bpmn:sequenceFlow id="Flow_1sj5mri" sourceRef="Gateway_0ie1d1k" targetRef="DomainSearchButton" />
-      <bpmn:eventBasedGateway id="Gateway_0ie1d1k">
+      <bpmn:eventBasedGateway id="Gateway_0ie1d1k" name="Wait for event message">
         <bpmn:incoming>Flow_10r6vs4</bpmn:incoming>
         <bpmn:incoming>Flow_0ruwo24</bpmn:incoming>
         <bpmn:outgoing>Flow_1sj5mri</bpmn:outgoing>
@@ -267,6 +267,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_07g39lv_di" bpmnElement="Gateway_0ie1d1k">
         <dc:Bounds x="685" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="636" y="212" width="68" height="27" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_1a1f2nq_di" bpmnElement="Gateway_005pocz" isMarkerVisible="true">
         <dc:Bounds x="1045" y="85" width="50" height="50" />

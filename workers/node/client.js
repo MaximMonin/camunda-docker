@@ -1,4 +1,4 @@
-// Camunda web client to websocket server
+// Camunda and Zeebe web client to websocket server
 
 class CamundaClient {
   constructor(url) {
@@ -8,7 +8,7 @@ class CamundaClient {
     this.callback = null;
   };
   setUrl (url) {
-    url = this.transfromUrl (url);
+    url = this.transformUrl (url);
     if (this.url != url) {
       if (this.socket && this.socket.readyState == 1) {
         this.socket.close ();
