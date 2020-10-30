@@ -14,7 +14,9 @@
       <property name="history">full</property>
       <property name="databaseSchemaUpdate">true</property>
       <property name="authorizationEnabled">true</property>
-      <property name="jobExecutorDeploymentAware">true</property>
+      <property name="jobExecutorDeploymentAware">false</property>
+      <property name="jobExecutorActivate">true</property>
+      <property name="jobExecutorPreferTimerJobs">false</property>       
       <property name="historyCleanupBatchWindowStartTime">00:01</property>
     </properties>
 
